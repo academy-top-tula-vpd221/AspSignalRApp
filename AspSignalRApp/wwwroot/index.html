@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Chat</title>
+</head>
+<body>
+    <div id="div_form">
+        <!--<label for="user_name">Name:</label>
+        <input type="text" id="user_name" /><br />-->
+        <label for="message">Message:</label>
+        <input type="text" id="message" /><br />
+        <input type="button" id="btn_send" value="Send" disabled="disabled" />
+    </div>
+    <div id="chat_room"></div>
+
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>-->
+    <script src="js/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        let hubConnection = new signalR.HubConnectionBuilder()
+                                        .withUrl("/chat")
+                                        .build();
+
+        document.getElementById("btn_send").addEventListener("click", function () {
+            //let userName = document.getElementById("user_name").value;
+            let message = document.getElementById("message").value;
+            hubConnection.invoke("Send", message)
+                .catch(function (error) {
+                    return console.error(error.toString());
+                });
+        });
+
+        hubConnection.on("Receive", function (message, userId) {
+            let nameElement = document.createElement("b");
+            nameElement.textContent = userId + ": ";
+
+            let messageElement = document.createElement("p");
+            messageElement.appendChild(nameElement);
+            messageElement.appendChild(document.createTextNode(message));
+
+            let lineFirst = document.getElementById("chat_room").firstChild;
+            document.getElementById("chat_room").insertBefore(messageElement, lineFirst);
+        });
+
+        hubConnection.on("Notify", function (message) {
+            let notifyElement = document.createElement("i");
+            notifyElement.textContent = message;
+
+            let lineChat = document.createElement("p");
+            lineChat.appendChild(notifyElement);
+
+            let lineFirst = document.getElementById("chat_room").firstChild;
+            document.getElementById("chat_room").insertBefore(lineChat, lineFirst);
+        })
+
+        hubConnection.start()
+            .then(function () {
+                document.getElementById("btn_send").disabled = false;
+            })
+            .catch(function (error) {
+                return console.error(error.toString());
+            });
+    </script>
+</body>
+</html>
